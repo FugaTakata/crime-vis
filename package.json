@@ -10,7 +10,8 @@
   "dependencies": {
     "next": "10.0.6",
     "react": "17.0.1",
-    "react-dom": "17.0.1"
+    "react-dom": "17.0.1",
+    "topojson-client": "^3.1.0"
   },
   "devDependencies": {
     "@types/node": "^14.14.22",
