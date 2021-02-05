@@ -7,7 +7,7 @@ paths = [
     '../data/crime_data_2020.csv'
 ]
 
-export_json_path = '../public/data/crime_data.json'
+export_json_path = '../public/data/crime_data1.json'
 
 keys = {
     "crimeType": [
@@ -89,17 +89,17 @@ for prefecture in keys["prefectures"]:
         data[prefecture][crime_type] = []
 
 
-def get_monthly_data(row, year):
-    data = {"year": year, "values": []}
-    for index, d in enumerate(row[2:len(row)]):
-        if d != '':
-            value = int(d)
-            if index == 0:
-                data['values'].append(value)
-                continue
-            data['values'].append(value - data['values'][index - 1])
+# def get_monthly_data(row, year):
+#     data = {"year": year, "values": []}
+#     for index, d in enumerate(row[2:len(row)]):
+#         if d != '':
+#             value = int(d)
+#             if index == 0:
+#                 data['values'].append(value)
+#                 continue
+#             data['values'].append(value - data['values'][index - 1])
 
-    return data
+#     return data
 
 
 def convert_data(data_url):
@@ -109,15 +109,25 @@ def convert_data(data_url):
         year = None
         for index, row in enumerate(spamreader):
             if index == 0:
-                year = row[1]
+                year = int(row[1])
                 continue
 
             crime_type = row[0]
             prefecture = row[1]
 
             if prefecture in data and crime_type in data[prefecture]:
-                data[prefecture][crime_type].append(
-                    get_monthly_data(row, year))
+                for index, d in enumerate(row[2:len(row)]):
+                    if d != '':
+                        value = int(d)
+                        if index == 0:
+                            data[prefecture][crime_type].append(
+                                {"year": year, "month": index+1, "value": value})
+                            continue
+                        data[prefecture][crime_type].append(
+                            {"year": year, "month": index+1, "value": value - data[prefecture][crime_type][index - 1]["value"]})
+            #             data['values'].append(value - data['values'][index - 1])
+            # data[prefecture][crime_type].append(
+            #     get_monthly_data(row, year))
 
 
 for path in paths:

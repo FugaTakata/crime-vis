@@ -9,18 +9,30 @@ import {
   selectedCrimeState,
   selectedPrefectureState,
 } from "../atoms";
+import { Loading } from "./Loading";
 
 interface Date {
-  year: number;
-  month: number;
+  from: {
+    year: number;
+    month: number;
+  };
+  to: {
+    year: number;
+    month: number;
+  };
+}
+
+interface Rate {
+  prefecture: string;
+  value: number;
 }
 
 function ChoroplethMap({ width, height }) {
   const [features, setFeatures] = useState([]);
-  const [dates, setDates] = useState<Date[]>([
-    { year: 2018, month: 1 },
-    { year: 2018, month: 2 },
-  ]);
+  const [date, setDate] = useState<Date>({
+    from: { year: 2018, month: 1 },
+    to: { year: 2018, month: 2 },
+  });
 
   const crimeData = useRecoilValue(crimeDataState);
   const [selectedPrefecture, setSelectedPrefecture] = useRecoilState(
@@ -53,49 +65,67 @@ function ChoroplethMap({ width, height }) {
   }, []);
 
   if (!crimeData) {
-    return <div></div>;
+    return <Loading />;
   }
 
-  const absMax = d3.max(
-    crimeData?.keys.prefectures.map((prefecture) => {
-      const from =
-        crimeData.data[prefecture][selectedCrime][dates[0].year - 2018][
-          "values"
-        ][dates[0].month - 1];
-      const to =
-        crimeData.data[prefecture][selectedCrime][dates[1].year - 2018][
-          "values"
-        ][dates[1].month - 1];
-      return Math.floor(((to - from) / from) * 100);
-    }),
-    (v: number) => Math.abs(v)
-  );
+  // const rates: Array<number> = features?.map(({ properties: { nam_ja } }) => {
+  //   const from =
+  //     crimeData.data[nam_ja][selectedCrime][dates[0].year - 2018]["values"][
+  //       dates[0].month - 1
+  //     ];
+  //   const to =
+  //     crimeData.data[nam_ja][selectedCrime][dates[1].year - 2018]["values"][
+  //       dates[1].month - 1
+  //     ];
+  //   if (from === 0) {
+  //     return 100;
+  //   }
+  //   return Math.floor(((to - from) / from) * 100);
+  // });
+
+  const rates: Array<Rate> = crimeData.keys.prefectures.map((prefecture) => {
+    const [from] = crimeData.data[prefecture][selectedCrime].filter((item) => {
+      return item.month === date.from.month && item.year === date.from.year;
+    });
+    const [to] = crimeData.data[prefecture][selectedCrime].filter(
+      (item) => item.month === date.to.month && item.year === date.to.year
+    );
+    if (from.value === 0) {
+      return { prefecture, value: null };
+    }
+    if (from.value === to.value) {
+      return { prefecture, value: 0 };
+    }
+    return {
+      prefecture,
+      value: Math.floor(((to.value - from.value) / from.value) * 100),
+    };
+  });
+
+  const absMax = d3.max(rates, (rate) => Math.abs(rate.value));
 
   const color = d3
     .scaleLinear()
     .domain([-absMax, 0, absMax])
-    .range(["#00f", "#ccc", "#f00"]);
+    .range(["#00f", "#ccc", "#f00"] as Iterable<number>);
 
   return (
     <svg width={side} height={side}>
-      {features.map((feature) => (
+      {features.map((feature, i) => (
         <path
           d={path(feature)}
           stroke="white"
-          fill={color(
-            Math.floor(
-              ((crimeData.data[feature.properties.nam_ja][selectedCrime][
-                dates[1].year - 2018
-              ]["values"][dates[1].month - 1] -
-                crimeData.data[feature.properties.nam_ja][selectedCrime][
-                  dates[0].year - 2018
-                ]["values"][dates[0].month - 1]) /
-                crimeData.data[feature.properties.nam_ja][selectedCrime][
-                  dates[0].year - 2018
-                ]["values"][dates[0].month - 1]) *
-                100
-            )
-          )}
+          fill={
+            rates.filter(
+              (rate) => rate.prefecture === feature.properties.nam_ja
+            )[0].value === null
+              ? "yellow"
+              : (color(
+                  rates.filter(
+                    (rate) => rate.prefecture === feature.properties.nam_ja
+                  )[0].value
+                ) as any)
+          }
           key={feature.properties.id}
         />
       ))}
