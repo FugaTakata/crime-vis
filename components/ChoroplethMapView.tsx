@@ -134,7 +134,11 @@ function ChoroplethMap({ width, height }) {
         >
           <path
             d={path(feature)}
-            onClick={() => {
+            // onClick={() => {
+            //   setSelectedPrefecture(feature.properties.nam_ja);
+            //   setFeatures((prev) => moveToEndAtIndex(prev, i));
+            // }}
+            onMouseEnter={() => {
               setSelectedPrefecture(feature.properties.nam_ja);
               setFeatures((prev) => moveToEndAtIndex(prev, i));
             }}
