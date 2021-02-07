@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useSetRecoilState } from "recoil";
-import { ChoroplethMapView, Header, Menu } from "../components/";
+import { ChoroplethMapView, Header, LineChartView, Menu } from "../components/";
 import { crimeDataState } from "../atoms/index";
+import { Loading } from "../components/Loading";
 
 export default function Home() {
   const setCrimeData = useSetRecoilState(crimeDataState);
@@ -20,41 +21,35 @@ export default function Home() {
   return (
     <>
       <Header />
-      <main
-        style={{
-          top: "52px",
-          right: 0,
-          bottom: 0,
-          left: 0,
-          position: "absolute",
-          overflowY: "hidden",
-        }}
-      >
-        <div className="abusolute top-0 right-0 bottom-0 left-0">
-          <div style={{ position: "relative", width: "100%", height: "100%" }}>
-            <div
-              className="p-3"
-              style={{
-                top: 0,
-                right: 0,
-                bottom: 0,
-                left: 0,
-                width: "100%",
-                height: "20%",
-              }}
-            >
-              <h1 className="title">36 month crimes prefecture</h1>
-            </div>
-            <div className="p-3">
-              <Menu />
-            </div>
-            <div className="p-3" style={{ position: "absolute", top: "" }}>
-              <ChoroplethMapView />
-            </div>
-            <div className="p-3">
-              <h1 className="title">36 month crime prefectures</h1>
+      <main className="absolute bg-gray-100 top-20 right-0 bottom-0 left-0">
+        <div className="relative w-full h-full">
+          {/* box */}
+          <div className="p-3 pb-0 absolute top-0 right-0 left-0 h-1/4">
+            <div className="rounded shadow w-full h-full bg-white p-5">
+              <div className="w-full h-full">
+                <LineChartView />
+              </div>
             </div>
           </div>
+          {/* /box */}
+          {/* box */}
+          <div className="p-3 absolute top-1/4 right-0 bottom-0 left-0">
+            <div className="rounded shadow w-full h-full bg-white p-5">
+              <div className="w-full h-full">
+                <ChoroplethMapView />
+              </div>
+            </div>
+          </div>
+          {/* /box */}
+          {/* box */}
+          {/* <div className="p-3 pt-0 absolute right-0 bottom-0 left-0 h-1/4">
+            <div className="rounded shadow w-full h-full bg-white p-5">
+              <div className="w-full h-full">
+                <LineChartView />
+              </div>
+            </div>
+          </div> */}
+          {/* /box */}
         </div>
       </main>
     </>

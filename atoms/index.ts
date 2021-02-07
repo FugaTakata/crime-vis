@@ -1,8 +1,27 @@
 import { atom } from "recoil";
 
+interface CrimeData {
+  data: {
+    [key: string]: {
+      [key: string]: Array<{
+        year: number;
+        month: number;
+        value: number;
+        normalizedValue: number;
+      }>;
+    };
+  };
+  keys: {
+    crimeType: Array<string>;
+    prefectures: Array<string>;
+  };
+}
+
+const initialCrimeData: CrimeData = null;
+
 export const crimeDataState = atom({
   key: "crimeDataState",
-  default: null,
+  default: initialCrimeData,
 });
 
 export const selectedPrefectureState = atom({
