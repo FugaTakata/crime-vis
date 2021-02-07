@@ -8,115 +8,102 @@ import {
 import { useRecoilValue } from "recoil";
 import { Loading } from "./Loading";
 
-interface Data {
-  year: string;
-  month: number;
-  value: number;
-}
-
 function CrimesLineChart({ width, height }) {
   const crimeData = useRecoilValue(crimeDataState);
   const selectedPrefecture = useRecoilValue(selectedPrefectureState);
+  const selectedCrime = useRecoilValue(selectedCrimeState);
   const margin = {
-    top: 20,
-    right: 60,
-    bottom: 50,
-    left: 60,
+    top: 10,
+    right: 40,
+    bottom: 20,
+    left: 40,
   };
   const contentWidth = width - margin.right - margin.left;
   const contentHeight = height - margin.top - margin.bottom;
 
   const axisColor = "#363636";
-  const interval = contentWidth / 2;
+  const timeFormat = d3.timeFormat("%Y-%m");
 
   if (!crimeData) {
     return <Loading />;
   }
 
-  const data: { [key: string]: Array<Data> } = {};
-  crimeData.keys.crimeType.forEach((crime) => {
-    data[crime] = [];
-    crimeData.data[selectedPrefecture][crime].forEach((d) => {
-      data[crime] = data[crime].concat(
-        d.values.map((v, i) => {
-          return { year: d.year, month: i + 1, value: v };
-        })
-      );
-    });
-  });
-
-  const period: Array<{ year: string; month: number }> = crimeData.data[
-    selectedPrefecture
-  ]["刑法犯総数"].reduce((acc, cur) => {
-    cur.values.forEach((_, i) => {
-      acc.push({ year: cur.year, month: i + 1 });
-    });
-    return acc;
-  }, []);
-
   const xScale = d3
     .scaleTime()
     .domain(
       d3.extent(
-        data["刑法犯総数"],
+        crimeData.data[selectedPrefecture][selectedCrime],
         (item) => new Date(`${item.year}-${item.month}`)
       )
     )
-    .range([
-      contentWidth / data["刑法犯総数"].length + 1,
-      contentWidth - contentWidth / data["刑法犯総数"].length + 1,
-    ]);
-  const yScales = {};
-  crimeData.keys.crimeType.forEach((key) => {
-    yScales[key] = d3
-      .scaleLinear()
-      .domain([
-        d3.min(data[key], (item) => item.value),
-        d3.max(data[key], (item) => item.value),
-      ])
-      .range([contentHeight, 0])
-      .nice();
-  });
+    .range([0, contentWidth]);
+
+  const yScale = d3
+    .scaleLinear()
+    .domain([0, 1])
+    .range([contentHeight, 0])
+    .nice();
+
+  const line = d3
+    .line()
+    .x((item: any) => xScale(new Date(`${item.year}-${item.month}`)))
+    .y((item: any) => yScale(item.normalizedValue));
+
+  const color = d3.scaleOrdinal(d3.schemeCategory10);
 
   return (
     <svg width={width} height={height}>
       <g transform={`translate(${margin.left},${margin.top})`}>
-        <g>
-          <circle cx={contentWidth / 2} cy={contentHeight / 2} r={10} />
-          {crimeData.keys.crimeType.map((key) => {
-            return data[key].map((item) => {
-              const line = d3
-                .line()
-                .x((item: any) =>
-                  xScale(new Date(`${item.year}-${item.month}`))
-                )
-                .y((item: any) => yScales[key](item.value));
+        <line x1="0" y1="0" x2="0" y2={contentHeight} stroke="black" />
+        {yScale.ticks(5).map((y) => {
+          return (
+            <g key={y} transform={`translate(0,${yScale(y)})`}>
+              <line x1="0" y1="0" x2="-5" y2="0" stroke="black" />
+              <text x="-8" y="5" textAnchor="end">
+                {y}
+              </text>
+            </g>
+          );
+        })}
+      </g>
+      <g transform={`translate(${margin.left},${margin.top + contentHeight})`}>
+        <line x1="0" y1="0" x2={contentWidth} y2="0" stroke="black" />
+        {xScale.ticks(18).map((d, i) => {
+          return (
+            <g key={i} transform={`translate(${xScale(d)},0)`}>
+              <line x1="0" y1="0" x2="0" y2="5" stroke="black" />
+              <text y="20" textAnchor="start">
+                {timeFormat(d)}
+              </text>
+            </g>
+          );
+        })}
+      </g>
 
-              return (
-                <g>
-                  <path d={line(item as any)} fill="none" stroke="black" />
-                </g>
-              );
-            });
-          })}
-        </g>
+      <g transform={`translate(${margin.left},${margin.top})`}>
+        {crimeData.keys.crimeType.map((key) => {
+          return (
+            <g key={key}>
+              <path
+                d={line(crimeData.data[selectedPrefecture][key] as any)}
+                fill="none"
+                stroke={color(key)}
+                strokeWidth="3"
+              />
+            </g>
+          );
+        })}
       </g>
     </svg>
   );
 }
 
-export function LineChartView({ type }) {
-  if (type === "prefectures") {
-    return null;
-  } else if (type === "crimes") {
-    return (
-      <Responsive
-        render={(width, height) => (
-          <CrimesLineChart width={width} height={height} />
-        )}
-      />
-    );
-  } else {
-    return null;
-  }
+export function LineChartView() {
+  return (
+    <Responsive
+      render={(width, height) => (
+        <CrimesLineChart width={width} height={height} />
+      )}
+    />
+  );
 }
