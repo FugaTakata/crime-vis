@@ -9,13 +9,14 @@ import { useRecoilValue } from "recoil";
 import { Loading } from "./Loading";
 
 function CrimesLineChart({ width, height }) {
+  console.log(width, height);
   const crimeData = useRecoilValue(crimeDataState);
   const selectedPrefecture = useRecoilValue(selectedPrefectureState);
   const selectedCrime = useRecoilValue(selectedCrimeState);
   const margin = {
     top: 10,
     right: 40,
-    bottom: 20,
+    bottom: 30,
     left: 40,
   };
   const contentWidth = width - margin.right - margin.left;
@@ -52,14 +53,18 @@ function CrimesLineChart({ width, height }) {
   const color = d3.scaleOrdinal(d3.schemeCategory10);
 
   return (
-    <svg width={width} height={height}>
+    <svg
+      // viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
+    >
       <g transform={`translate(${margin.left},${margin.top})`}>
         <line x1="0" y1="0" x2="0" y2={contentHeight} stroke="black" />
         {yScale.ticks(5).map((y) => {
           return (
             <g key={y} transform={`translate(0,${yScale(y)})`}>
-              <line x1="0" y1="0" x2="-5" y2="0" stroke="black" />
-              <text x="-8" y="5" textAnchor="end">
+              <line x1="0" y1="0" x2="-5" y2="0" stroke={axisColor} />
+              <text x="-8" y="5" textAnchor="end" fill={axisColor}>
                 {y}
               </text>
             </g>
@@ -67,12 +72,12 @@ function CrimesLineChart({ width, height }) {
         })}
       </g>
       <g transform={`translate(${margin.left},${margin.top + contentHeight})`}>
-        <line x1="0" y1="0" x2={contentWidth} y2="0" stroke="black" />
+        <line x1="0" y1="0" x2={contentWidth} y2="0" stroke={axisColor} />
         {xScale.ticks(18).map((d, i) => {
           return (
             <g key={i} transform={`translate(${xScale(d)},0)`}>
-              <line x1="0" y1="0" x2="0" y2="5" stroke="black" />
-              <text y="20" textAnchor="start">
+              <line x1="0" y1="0" x2="0" y2="5" stroke={axisColor} />
+              <text y="20" textAnchor="start" fill={axisColor}>
                 {timeFormat(d)}
               </text>
             </g>
@@ -99,11 +104,16 @@ function CrimesLineChart({ width, height }) {
 }
 
 export function LineChartView() {
+  const width = 1376;
+  const height = 119;
   return (
-    <Responsive
-      render={(width, height) => (
-        <CrimesLineChart width={width} height={height} />
-      )}
-    />
+    // <Responsive
+    //   render={(width: number, height: number) => (
+    //     <CrimesLineChart width={width} height={height} />
+    //   )}
+    // />
+    <div className="overflow-x-auto">
+      <CrimesLineChart width={width} height={height} />
+    </div>
   );
 }
