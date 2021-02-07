@@ -7,7 +7,7 @@ paths = [
     '../data/crime_data_2020.csv'
 ]
 
-export_json_path = '../public/data/crime_data1.json'
+export_json_path = '../public/data/crime_data.json'
 
 keys = {
     "crimeType": [
@@ -89,19 +89,6 @@ for prefecture in keys["prefectures"]:
         data[prefecture][crime_type] = []
 
 
-# def get_monthly_data(row, year):
-#     data = {"year": year, "values": []}
-#     for index, d in enumerate(row[2:len(row)]):
-#         if d != '':
-#             value = int(d)
-#             if index == 0:
-#                 data['values'].append(value)
-#                 continue
-#             data['values'].append(value - data['values'][index - 1])
-
-#     return data
-
-
 def convert_data(data_url):
     global data
     with open(data_url, newline='', mode='r') as csvfile:
@@ -116,22 +103,55 @@ def convert_data(data_url):
             prefecture = row[1]
 
             if prefecture in data and crime_type in data[prefecture]:
+                last = 0
                 for index, d in enumerate(row[2:len(row)]):
                     if d != '':
                         value = int(d)
+                        # not to add 2020/12 data because of null
+                        if year == 2020 and index == 11:
+                            last = 0
+                            value = 0
                         if index == 0:
                             data[prefecture][crime_type].append(
                                 {"year": year, "month": index+1, "value": value})
+                            last = value
                             continue
                         data[prefecture][crime_type].append(
-                            {"year": year, "month": index+1, "value": value - data[prefecture][crime_type][index - 1]["value"]})
+                            {"year": year, "month": index+1, "value": value - last})
+                        last = value
             #             data['values'].append(value - data['values'][index - 1])
             # data[prefecture][crime_type].append(
             #     get_monthly_data(row, year))
 
 
+def normalize():
+    global data
+    maxs = {}
+    mins = {}
+
+    for prefecture in keys['prefectures']:
+        maxs[prefecture] = {}
+        mins[prefecture] = {}
+        for crime_type in keys['crimeType']:
+            maxs[prefecture][crime_type] = 0
+            mins[prefecture][crime_type] = float('inf')
+            for item in data[prefecture][crime_type]:
+                if maxs[prefecture][crime_type] < item['value']:
+                    maxs[prefecture][crime_type] = item['value']
+                if item['value'] < mins[prefecture][crime_type]:
+                    mins[prefecture][crime_type] = item['value']
+
+    for prefecture in keys['prefectures']:
+        for crime_type in keys['crimeType']:
+            for item in data[prefecture][crime_type]:
+                item['normalizedValue'] = 0 if maxs[prefecture][crime_type] == 0 else (
+                    item['value'] - mins[prefecture][crime_type]) / (maxs[prefecture][crime_type] - mins[prefecture][crime_type])
+
+
 for path in paths:
     convert_data(path)
+
+normalize()
 
 with open(export_json_path, mode='w') as json_w:
     json_w.write(json.dumps({"keys": keys, "data": data}, ensure_ascii=False))

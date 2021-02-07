@@ -3,7 +3,12 @@ import { atom } from "recoil";
 interface CrimeData {
   data: {
     [key: string]: {
-      [key: string]: Array<{ year: number; month: number; value: number }>;
+      [key: string]: Array<{
+        year: number;
+        month: number;
+        value: number;
+        normalizedValue: number;
+      }>;
     };
   };
   keys: {
